@@ -1,0 +1,13 @@
+1. main.c
+///const uint8_t soft_ver[] = {"EasyComm-lorawan-EU433-v1.3\r\n"};  
+
+2.lora_mac.h
+#define DEFAULT_FREQ   			472300000
+#define DEFAULT_RX2_FREQ       		505300000
+
+3.lora_mac.c
+StackGetFreeChan()
+{
+///433¡¢470Í¬Æµ
+///stack_context.rx1_freq  = stack_context.tx_freq;
+}

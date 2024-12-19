@@ -1,0 +1,11 @@
+
+*.o
+*.xcl
+*.pbi
+*.ps1
+*.bat
+*.wsdt
+*.s
+*.icf
+/lora485ctrl (2)/lora485ctrl/EWARM
+/lora485ctrl (2)/lora485ctrl/sourcesight
