@@ -84,9 +84,8 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	FeedDog();
         
 
-       while(1){
-         
-        Print(read,8);
+        for(int i = 0; i < 10; i++){
+        
         
         FeedDog();
         
@@ -95,25 +94,30 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	if(HAL_UART_Receive(&RS485,s->sensorData,length*2+3+2 ,1000) == HAL_OK){
           
           	FeedDog();
-
-		if(s == &ZW){
-		sensorToLora(&ZW,length);
-			
-		}else if(s == &ZD){
-		
-		sensorToLora(&ZD,length);
                 
-		}
-                break;
+		sensorToLora(s,length);
+
+                return ;
                 
 	} else {
-          
+        
+         if(i==9){
+           
+           memset(s->sensorData, 0xFF, sizeof(s->sensorData));  // 将sensorData全设为0xFF
+           
+           sensorToLora(s,length);
+           
+           Print("sensor error\n",strlen("sensor error\n"));
+                      
+           return ;
+           
+           
+         }
         Print("defeat",5);
-        FeedDog();
         HAL_Delay(500);
         FeedDog();
         }       
        
-       }
-
+        }
+             
 }

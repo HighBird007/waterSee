@@ -526,6 +526,6 @@ void SensorTask(void)
        // LoraTxPkt("test",4);
       */
 
-	//Usart1RxClear();
+	Usart1RxClear();
 }
 

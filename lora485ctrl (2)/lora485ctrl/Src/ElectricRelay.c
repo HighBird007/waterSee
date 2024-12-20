@@ -20,14 +20,18 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
 	
         FeedDog();
         
-      
-         HAL_UART_Transmit(&RS485,DAMT0FFF_MT_CMD,8,500);
-                
-         Print(DAMT0FFF_MT_CMD,8);
-
-         HAL_Delay(100);
-
+        for(int i = 0 ;i < 10 ;i++){
         
-        FeedDog();
+         HAL_UART_Transmit(&RS485,DAMT0FFF_MT_CMD,8,500);
+         FeedDog();
+         if(HAL_UART_Receive(&RS485,DAMT0FFF_MT_CMD,8,500)!=HAL_OK&&i==9){
+         
+          //error´¦Àí
+         
+         return ;
+         }
+         else return ;
+        
+        }
 }
 

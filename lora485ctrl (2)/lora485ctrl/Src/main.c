@@ -251,8 +251,7 @@ int main(void)
 	
         LocalUsartInit();
         
-        
-        initLoop();
+       
         
 
         
@@ -265,7 +264,7 @@ int main(void)
 	SysMiscParaInit();
 	
 	FeedDog();
-        
+                initLoop();
 	while(1)
 	{     
 		LoraTask();

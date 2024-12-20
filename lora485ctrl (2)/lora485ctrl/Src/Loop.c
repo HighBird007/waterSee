@@ -5,9 +5,9 @@
 
 
 //如果注释下面的debugmode宏定义 则不会自动改变水位
-#define debugMode 1 
+//#define debugMode 1 
 
-uint8_t measureNum = 3 ; //测量轮数 一个池子测量多少次目前3次
+uint8_t measureNum = 6 ; //测量轮数 一个池子测量多少次目前3次
 uint8_t flushNum = 3 ;//需要完成的冲洗次数 目前3
 uint8_t nodeNum = 11;//目前系统多少个池子
 
@@ -23,19 +23,29 @@ uint8_t draining = false ; //当前的排水泵是否开启
 uint8_t filling = false ;//当前的进水泵是否开启
 uint8_t level = LOW;//当前的水位
 
+
+//水位高低引脚以及中断的设置
+#define LowFlag_Pin GPIO_PIN_14
+#define LowFlag_GPIO_Port GPIOB
+#define LowFlag_EXTI_IRQn EXTI15_10_IRQn
+#define HighFlag_Pin GPIO_PIN_15
+#define HighFlag_GPIO_Port GPIOB
+#define HighFlag_EXTI_IRQn EXTI15_10_IRQn
+
+/*
+pb13   时低水平位置  也就是 pb14
+
+pb12  时高液位位  对应的时pb15
+
+*/
 void initWaterLevelGPIO(){
+  
   
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = HighFlag_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(HighFlag_GPIO_Port, &GPIO_InitStruct);
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = LowFlag_Pin;
@@ -43,14 +53,17 @@ void initWaterLevelGPIO(){
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LowFlag_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = HighFlag_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(HighFlag_GPIO_Port, &GPIO_InitStruct);
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   
 }
+
 
 void initLoop(void){
 	//初始化对应的高低水位gpio  当前是   HighFlag_Pin GPIO_PIN_1    LowFlag_Pin GPIO_PIN_4
@@ -89,16 +102,17 @@ void initLoop(void){
         
 }
 
+
 void levelToHigh(){
   
 	level = HIGH;
-       // Print("HIGH",4);
+       Print("HIGH",4);
         
 }
 void levelToLow(){
   
         level = LOW;
-      //  Print("LOW",3);
+       Print("LOW",3);
 }
 
 //关闭进水泵  但是不一定要打开排水泵
@@ -136,11 +150,11 @@ void openFilling(){
 		filling=true;
 		controlDeviceStatus(node,powerOn);
 		HAL_Delay(500);
-                FeedDog();
+        FeedDog();
 		closeDraining();
 		draining=false;
-                HAL_Delay(500);
-                FeedDog();
+        HAL_Delay(500);
+        FeedDog();
                 
 #ifdef debugMode
 		levelToHigh();
@@ -228,7 +242,7 @@ void measureTask(){
 
 }
 void loop(void){
-  
+
 	 FeedDog();
 	if(task == 1 ){
 	flushTask();
@@ -242,7 +256,7 @@ void loop(void){
 //组装lora协议格式 发送数据
 uint8_t loraData[100];
 
-void assembleLoraData() {
+void assembleLoraData(){
   
     loraData[0] = 0xFE;  // 起始符
 
@@ -275,16 +289,22 @@ void assembleLoraData() {
     // 发送数据包
     LoraTxPkt(loraData, loraData[1]);
     
-    Print(loraData, loraData[1]);
-    
 }
 
 
+void EXTI15_10_IRQHandler(void)
+{
+
+  HAL_GPIO_EXTI_IRQHandler(LowFlag_Pin);
+  HAL_GPIO_EXTI_IRQHandler(HighFlag_Pin);
+
+}
 
 //重写gpio的中断函数
 uint32_t lastTime;
 uint32_t currentTime;
-uint8_t acceptTime = 5 ;
+uint8_t acceptTime =5;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	
 	currentTime = HAL_GetTick();
@@ -311,10 +331,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == LowFlag_Pin){
 		
 		level = LOW;
-		//Print("low",3);
+		Print("low\n",5);
 		
 	}else if(GPIO_Pin == HighFlag_Pin){
-		//Print("high",4);
+		Print("high\n",6);
 		level = HIGH;
 		
 	}
@@ -323,6 +343,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	
 }
 
+
 //测量一分钟间隔
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	
@@ -330,7 +351,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		
 		++measureCount;
                 
-                Print("timok",5);
+                Print("timok\n",7);
 		if(measureCount >= measureNum){
 
                 HAL_TIM_Base_Stop_IT(&htim15);
@@ -340,19 +361,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 }
 
 
-
-void EXTI1_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(HighFlag_Pin);
-}
-
-
-void EXTI4_IRQHandler(void)
-{
-
-  HAL_GPIO_EXTI_IRQHandler(LowFlag_Pin);
-
-}
 
 
 void TIM1_BRK_TIM15_IRQHandler(void)

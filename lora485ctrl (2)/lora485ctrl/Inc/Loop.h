@@ -18,13 +18,6 @@
 
 #define RS485 huart1
 
-//水位高低引脚以及中断的设置
-#define HighFlag_Pin GPIO_PIN_1
-#define HighFlag_GPIO_Port GPIOA
-#define HighFlag_EXTI_IRQn EXTI1_IRQn
-#define LowFlag_Pin GPIO_PIN_4
-#define LowFlag_GPIO_Port GPIOA
-#define LowFlag_EXTI_IRQn EXTI4_IRQn
 
 extern uint8_t node;
 
