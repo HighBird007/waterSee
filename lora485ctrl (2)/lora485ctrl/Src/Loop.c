@@ -5,12 +5,13 @@
 
 
 //如果注释下面的debugmode宏定义 则不会自动改变水位
-//#define debugMode 1 
+//#define debugMode 1
 
-uint8_t measureNum = 6 ; //测量轮数 一个池子测量多少次目前3次
-uint8_t flushNum = 3 ;//需要完成的冲洗次数 目前3
-uint8_t nodeNum = 11;//目前系统多少个池子
+//如果关闭debug  一定要注意下面的三个参数
 
+uint8_t measureNum = 1 ; //测量轮数 一个池子测量多少次最初时3次  //系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是 30s * 需要测量的数据次数
+uint8_t flushNum = 1 ;//需要完成的冲洗次数 目前3
+uint8_t nodeNum = 4;//目前系统多少个池子
 //上面三组变量可以自己设置改变 目前100s发送一次检测数据
 
 uint8_t task=1  ;//当前任务状态，冲洗flush：1, 测量measure:2
@@ -106,18 +107,20 @@ void initLoop(void){
 void levelToHigh(){
   
 	level = HIGH;
-       Print("HIGH",4);
+        Print("HIGH",4);
         
 }
 void levelToLow(){
   
         level = LOW;
-       Print("LOW",3);
+        Print("LOW",3);
 }
 
 //关闭进水泵  但是不一定要打开排水泵
 void closeFilling(){
-  
+                
+                Print("Filling Close \n",strlen("Filling Close \n"));
+                
 		filling=false;
                 
 		controlDeviceStatus(node,powerOff);
@@ -125,13 +128,14 @@ void closeFilling(){
 
 //关闭排水阀 不一定需要开进水泵 但是打开排水泵 一定要关闭进水泵
 void openDraining(){
-	
+                Print("Draining Open \n",strlen("Draining Open \n"));
+                
 		filling = false ;
 		controlDeviceStatus(node,powerOff);
 		HAL_Delay(100);
 		controlDeviceStatus(drainingPumpRoad,powerOn);
 		draining = true ;
-                HAL_Delay(500);
+                HAL_Delay(1000);
                 FeedDog();
 #ifdef debugMode
 		levelToLow();
@@ -139,21 +143,21 @@ void openDraining(){
 		
 }
 void closeDraining(){
-	
+                Print("Draining Close \n",strlen("Draining Close \n"));
                 controlDeviceStatus(drainingPumpRoad,powerOff);
 		draining = false ;
 }
 
 //控制进水泵开 就意味着 排水阀必须关
 void openFilling(){
-                  
+                  Print("Filling Open \n",strlen("Filling Open \n"));
 		filling=true;
 		controlDeviceStatus(node,powerOn);
 		HAL_Delay(500);
         FeedDog();
 		closeDraining();
 		draining=false;
-        HAL_Delay(500);
+        HAL_Delay(1000);
         FeedDog();
                 
 #ifdef debugMode
@@ -206,11 +210,11 @@ void measureTask(){
 		if(measureCount >= measureNum ){
 
 		
-                FeedDog();
+            //    FeedDog();
                  
-                ZWRead();
+             //   ZWRead();
                 
-                ZDRead();
+            //    ZDRead();
                 
                 assembleLoraData();
                 
@@ -242,6 +246,7 @@ void measureTask(){
 
 }
 void loop(void){
+        
 
 	 FeedDog();
 	if(task == 1 ){
@@ -306,7 +311,27 @@ uint32_t currentTime;
 uint8_t acceptTime =5;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	
+	/*
+    if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_14) == GPIO_PIN_SET){
+  
+  Print("low is HIGH \n",strlen("low is HIGH \n"));
+  
+  }else {
+  Print("low is LOW \n",strlen("low is LOW \n"));
+  
+  }
+  
+  
+    if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15) == GPIO_PIN_SET){
+  
+  Print("HIGH is HIGH \n",strlen("HIGH is HIGH \n"));
+  
+  }else {
+    
+  Print("HIGH is LOW \n",strlen("HIGH is LOW \n"));
+  
+  }
+  */
 	currentTime = HAL_GetTick();
 	
 	//如果触发中断的上下间隔小于acceptTime ms 则认为无效鿿凿
@@ -331,10 +356,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == LowFlag_Pin){
 		
 		level = LOW;
-		Print("low\n",5);
+		//Print("low\n",5);
 		
 	}else if(GPIO_Pin == HighFlag_Pin){
-		Print("high\n",6);
+		//Print("high\n",6);
 		level = HIGH;
 		
 	}

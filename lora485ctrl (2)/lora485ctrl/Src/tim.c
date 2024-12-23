@@ -3,12 +3,9 @@
 
 
 TIM_HandleTypeDef htim15;
-//系统主频80mhz
+//系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是 30s * 需要测量的数据次数
 void MX_TIM15_Init(void)
 {
-
-
-
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 

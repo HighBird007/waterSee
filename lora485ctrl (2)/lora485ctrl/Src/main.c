@@ -251,11 +251,6 @@ int main(void)
 	
         LocalUsartInit();
         
-       
-        
-
-        
-         
 	Print("\r\nsystem start,...\r\n",strlen("\r\nsystem start...\r\n"));
 	Print((uint8_t*)soft_ver,strlen(soft_ver));
 
@@ -264,7 +259,8 @@ int main(void)
 	SysMiscParaInit();
 	
 	FeedDog();
-                initLoop();
+        
+         initLoop();
 	while(1)
 	{     
 		LoraTask();

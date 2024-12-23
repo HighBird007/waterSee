@@ -173,13 +173,16 @@ void Usart1Init(void)
 	huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
 	huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 	HAL_UART_Init(&huart1);
-    
+    /*
         HAL_NVIC_SetPriority(USART1_IRQn, 4, 0);
         HAL_NVIC_EnableIRQ(USART1_IRQn);
 	__HAL_UART_ENABLE_IT(&huart1,UART_IT_RXNE);	
+        
+        */
 }
 void USART1_IRQHandler(void)
 {
+  
 	if(__HAL_UART_GET_FLAG((&huart1),USART_ISR_RXNE) != RESET)
 	{
 		if(trans_para.rx_counter >= TRANS_RX_MAX_FRAME_LEN-1)
