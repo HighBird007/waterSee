@@ -220,7 +220,7 @@ void loop(void){
       level = LOW;
       
       }
-      //如果gigh引脚处于高电平 那么处于高液位
+      //如果high引脚处于高电平 那么处于高液位
       else if( high == GPIO_PIN_SET ){
       
           for(int i = 0 ; i < noiseCount ; i++){
