@@ -1,17 +1,10 @@
 #include "Loop.h"
-
-
 //继电器地址0x02   多功能水质检测仪ZW 0x01   污浊传感器ZD0x03 排水泵继电器地址 0x11
-
 
 //如果注释下面的debugmode宏定义 则不会自动改变水位
 //#define debugMode 1
 
-//如果定义了下面 则水位变化采用中断
-#define ITLevel 1
-
 //如果关闭debug  一定要注意下面的三个参数
-
 uint8_t measureNum = 1 ; //测量轮数 一个池子测量多少次最初时3次  //系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是 30s * 需要测量的数据次数
 uint8_t flushNum = 1 ;//需要完成的冲洗次数 目前3
 uint8_t nodeNum = 4;//目前系统多少个池子
@@ -42,7 +35,7 @@ pb13   时低水平位置  也就是 pb14
 pb12  时高液位位  对应的时pb15
 
 */
-void initWaterLevelGPIO(){
+void initWaterLevelGPIO_IT(){
   
   
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -68,10 +61,32 @@ void initWaterLevelGPIO(){
   
 }
 
+void  initWaterLevelGPIO_Input(void)
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pins : PBPin PBPin */
+  GPIO_InitStruct.Pin = LowFlag_Pin|HighFlag_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+}
+//如果定义了下面 则水位变化采用中断
+#define ITLevel 1
 
 void initLoop(void){
-	//初始化对应的高低水位gpio  当前是   HighFlag_Pin GPIO_PIN_1    LowFlag_Pin GPIO_PIN_4
-        initWaterLevelGPIO();
+#ifdef ITLevel
+       initWaterLevelGPIO_IT();
+#else
+       initWaterLevelGPIO_Input();
+#endif
+       
         //初始化测量定时器 但计时功能有待商榷 不知道当前的主频是多少
         MX_TIM15_Init();
         //初始化传感器结构体
@@ -107,66 +122,6 @@ void initLoop(void){
 }
 
 
-void levelToHigh(){
-  
-	level = HIGH;
-        Print("HIGH",4);
-        
-}
-void levelToLow(){
-  
-        level = LOW;
-        Print("LOW",3);
-}
-
-//关闭进水泵  但是不一定要打开排水泵
-void closeFilling(){
-                
-                Print("Filling Close \n",strlen("Filling Close \n"));
-                
-		filling=false;
-                
-		controlDeviceStatus(node,powerOff);
-}
-
-//关闭排水阀 不一定需要开进水泵 但是打开排水泵 一定要关闭进水泵
-void openDraining(){
-                Print("Draining Open \n",strlen("Draining Open \n"));
-                
-		filling = false ;
-		controlDeviceStatus(node,powerOff);
-		HAL_Delay(100);
-		controlDeviceStatus(drainingPumpRoad,powerOn);
-		draining = true ;
-                HAL_Delay(1000);
-                FeedDog();
-#ifdef debugMode
-		levelToLow();
-#endif
-		
-}
-void closeDraining(){
-                Print("Draining Close \n",strlen("Draining Close \n"));
-                controlDeviceStatus(drainingPumpRoad,powerOff);
-		draining = false ;
-}
-
-//控制进水泵开 就意味着 排水阀必须关
-void openFilling(){
-                  Print("Filling Open \n",strlen("Filling Open \n"));
-		filling=true;
-		controlDeviceStatus(node,powerOn);
-		HAL_Delay(500);
-        FeedDog();
-		closeDraining();
-		draining=false;
-        HAL_Delay(1000);
-        FeedDog();
-                
-#ifdef debugMode
-		levelToHigh();
-#endif
-}
 //当水位处于高水位 并且此时进水泵处于开启状态则 ++  知道三次退出冲洗事件进入 测量事件  退出时开启排水 
 //测量前需要确保canMeasure是true  true 的条件是  此时进水泵开启 并且是高水位状态 如果没有则开始进水泵 
 
@@ -183,14 +138,9 @@ void flushTask(){
 		return;
 		
 	}
-  //下面本质上就是要让水位超过高水位 没超过一次 就会开启排水泵 再让他处于低水位 然后在开启水泵 然后高水位 这样重复3次
-    //如果此时 水位是高 并且排水draining（排水阀）没有在开启状态  则进入if内部  关闭对应的进水泵 暂停一秒后 打开排水泵 设置对应状态的更新然后 FLUSH_HITS++
+
 	if( filling == true && level == HIGH ){
-		/*
-		SendRelayCtl(关node对应水泵);
-		 HAL_Delay(1000);
-		SendRelayCtl(开排阀);
-		*/
+
                 openDraining();
 		
 		flushCount++;
@@ -198,11 +148,7 @@ void flushTask(){
 	}
 	//进水泵未开启 但是水位已经处于比较低的水准 则开启水泵 并且关闭排水阀 更新状态 但是flush并不会++
     else if( draining == true && level==LOW ){
-		/*
-		SendRelayCtl(关排阀);
-		HAL_Delay(1000);
-		SendRelayCtl(开node对应水泵);
-		*/
+
 		openFilling();
 		
 	} 
@@ -213,11 +159,11 @@ void measureTask(){
 		if(measureCount >= measureNum ){
 
 		
-            //    FeedDog();
+                FeedDog();
                  
-             //   ZWRead();
+                ZWRead();
                 
-            //    ZDRead();
+                ZDRead();
                 
                 assembleLoraData();
                 
@@ -248,8 +194,49 @@ void measureTask(){
 		}
 
 }
+
+#define noiseCount 3
+
 void loop(void){
+  
+#ifndef ITLevel
         
+      GPIO_PinState low = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
+      GPIO_PinState high = HAL_GPIO_ReadPin(HighFlag_GPIO_Port,HighFlag_Pin);
+      
+      //如果此时low引脚是低电平 处于低液位
+      if(low == GPIO_PIN_RESET){
+      
+        for(int i = 0 ; i < noiseCount ; i++){
+        
+          HAL_Delay(500);
+          
+          GPIO_PinState test = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
+          
+          if(test != GPIO_PIN_RESET)return ;
+          
+        }
+        
+      level = LOW;
+      
+      }
+      //如果gigh引脚处于高电平 那么处于高液位
+      else if( high == GPIO_PIN_SET ){
+      
+          for(int i = 0 ; i < noiseCount ; i++){
+        
+          HAL_Delay(500);
+          
+          GPIO_PinState test = HAL_GPIO_ReadPin(HighFlag_GPIO_Port,HighFlag_Pin);
+          
+          if(test != GPIO_PIN_SET)return ;
+          
+        }
+        
+      level = HIGH;
+      
+      } 
+#endif
 
 	 FeedDog();
 	if(task == 1 ){
@@ -314,30 +301,7 @@ uint32_t currentTime;
 uint8_t acceptTime =5;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	/*
-    if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_14) == GPIO_PIN_SET){
-  
-  Print("low is HIGH \n",strlen("low is HIGH \n"));
-  
-  }else {
-  Print("low is LOW \n",strlen("low is LOW \n"));
-  
-  }
-  
-  
-    if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15) == GPIO_PIN_SET){
-  
-  Print("HIGH is HIGH \n",strlen("HIGH is HIGH \n"));
-  
-  }else {
-    
-  Print("HIGH is LOW \n",strlen("HIGH is LOW \n"));
-  
-  }
-  */
-        
-         
-  
+
 	if(GPIO_Pin == LowFlag_Pin){
 		
 		level = LOW;
@@ -360,8 +324,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim == &htim15){
 		
 		++measureCount;
-                
-                Print("timok\n",7);
+ 
 		if(measureCount >= measureNum){
 
                 HAL_TIM_Base_Stop_IT(&htim15);
@@ -378,4 +341,65 @@ void TIM1_BRK_TIM15_IRQHandler(void)
   
    HAL_TIM_IRQHandler(&htim15);
    
+}
+
+//关闭进水泵  但是不一定要打开排水泵
+void closeFilling(){
+                
+                Print("Filling Close \n",strlen("Filling Close \n"));
+                
+		filling=false;
+                
+		controlDeviceStatus(node,powerOff);
+}
+
+//关闭排水阀 不一定需要开进水泵 但是打开排水泵 一定要关闭进水泵
+void openDraining(){
+                Print("Draining Open \n",strlen("Draining Open \n"));
+                
+		filling = false ;
+		controlDeviceStatus(node,powerOff);
+		HAL_Delay(100);
+		controlDeviceStatus(drainingPumpRoad,powerOn);
+		draining = true ;
+                HAL_Delay(1000);
+                FeedDog();
+#ifdef debugMode
+		levelToLow();
+#endif
+		
+}
+void closeDraining(){
+                Print("Draining Close \n",strlen("Draining Close \n"));
+                controlDeviceStatus(drainingPumpRoad,powerOff);
+		draining = false ;
+}
+
+//控制进水泵开 就意味着 排水阀必须关
+void openFilling(){
+                  Print("Filling Open \n",strlen("Filling Open \n"));
+		filling=true;
+		controlDeviceStatus(node,powerOn);
+		HAL_Delay(500);
+        FeedDog();
+		closeDraining();
+		draining=false;
+        HAL_Delay(1000);
+        FeedDog();
+                
+#ifdef debugMode
+		levelToHigh();
+#endif
+}
+
+void levelToHigh(){
+  
+	level = HIGH;
+        Print("HIGH",4);
+        
+}
+void levelToLow(){
+  
+        level = LOW;
+        Print("LOW",3);
 }
