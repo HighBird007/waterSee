@@ -7,6 +7,9 @@
 //如果注释下面的debugmode宏定义 则不会自动改变水位
 //#define debugMode 1
 
+//如果定义了下面 则水位变化采用中断
+#define ITLevel 1
+
 //如果关闭debug  一定要注意下面的三个参数
 
 uint8_t measureNum = 1 ; //测量轮数 一个池子测量多少次最初时3次  //系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是 30s * 需要测量的数据次数
@@ -60,7 +63,7 @@ void initWaterLevelGPIO(){
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(HighFlag_GPIO_Port, &GPIO_InitStruct);
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   
 }
@@ -332,27 +335,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   
   }
   */
-	currentTime = HAL_GetTick();
-	
-	//如果触发中断的上下间隔小于acceptTime ms 则认为无效鿿凿
-	if( currentTime - lastTime <= acceptTime ){
-		
-	lastTime = currentTime;
-		
-	return ;
-		
-	}
-	
-	if(currentTime < lastTime && UINT32_MAX-lastTime+currentTime <= acceptTime){
-		
-	//halgettick返回的是单片机启动运行时间的ms 朿长昿49.7夿 如果到达对应的天敿 会产生溢出为0 承以霿要重新计箿	
-		
-	lastTime = currentTime;
-		
-	return ;
-	
-	}
-	
+        
+         
+  
 	if(GPIO_Pin == LowFlag_Pin){
 		
 		level = LOW;
