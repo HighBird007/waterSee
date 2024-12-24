@@ -20,6 +20,18 @@ uint8_t draining = false ; //当前的排水泵是否开启
 uint8_t filling = false ;//当前的进水泵是否开启
 uint8_t level = LOW;//当前的水位
 
+void levelToHigh(){
+  
+	level = HIGH;
+        Print("HIGH",4);
+        
+}
+void levelToLow(){
+  
+        level = LOW;
+        Print("LOW",3);
+}
+
 
 //水位高低引脚以及中断的设置
 #define LowFlag_Pin GPIO_PIN_14
@@ -78,9 +90,10 @@ void  initWaterLevelGPIO_Input(void)
 
 }
 //如果定义了下面 则水位变化采用中断
-#define ITLevel 1
+//#define ITLevel 1
 
 void initLoop(void){
+  
 #ifdef ITLevel
        initWaterLevelGPIO_IT();
 #else
@@ -157,7 +170,8 @@ void flushTask(){
 void measureTask(){
 	
 		if(measureCount >= measureNum ){
-
+                
+                  Print("measure\n",strlen("measure\n"));
 		
                 FeedDog();
                  
@@ -198,7 +212,7 @@ void measureTask(){
 #define noiseCount 3
 
 void loop(void){
-  
+   FeedDog();
 #ifndef ITLevel
         
       GPIO_PinState low = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
@@ -210,13 +224,19 @@ void loop(void){
         for(int i = 0 ; i < noiseCount ; i++){
         
           HAL_Delay(500);
+          FeedDog();
           
+         // Print("low is low\n",strlen("low is low\n"));
           GPIO_PinState test = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
           
-          if(test != GPIO_PIN_RESET)return ;
+          if(test != GPIO_PIN_RESET){
+          
+        //  Print("low is error\n",strlen("low is error\n"));
+            return ;
+          }
           
         }
-        
+       // Print("sure low is low\n",strlen("sure low is low\n"));
       level = LOW;
       
       }
@@ -226,13 +246,17 @@ void loop(void){
           for(int i = 0 ; i < noiseCount ; i++){
         
           HAL_Delay(500);
-          
+           FeedDog();
           GPIO_PinState test = HAL_GPIO_ReadPin(HighFlag_GPIO_Port,HighFlag_Pin);
+         // Print("high is high\n",strlen("high is high\n"));
+          if(test != GPIO_PIN_SET){
           
-          if(test != GPIO_PIN_SET)return ;
+         //  Print("high is error\n",strlen("high is error\n"));
+          return ;
+          }
           
         }
-        
+      //  Print("sure high is high\n",strlen("sure high is high\n"));
       level = HIGH;
       
       } 
@@ -262,7 +286,7 @@ void assembleLoraData(){
 
     loraData[3] = 0x81;  // 命令码
 
-    loraData[4] = node;  // 节点
+    loraData[4] = node + 1;  // 节点
 
     loraData[5] = 40;    // 固定值
 
@@ -283,6 +307,8 @@ void assembleLoraData(){
 
     // 发送数据包
     LoraTxPkt(loraData, loraData[1]);
+    
+    Print("sendok\n",strlen("sendok\n"));
     
 }
 
@@ -346,7 +372,7 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 //关闭进水泵  但是不一定要打开排水泵
 void closeFilling(){
                 
-                Print("Filling Close \n",strlen("Filling Close \n"));
+            //    Print("Filling Close \n",strlen("Filling Close \n"));
                 
 		filling=false;
                 
@@ -355,7 +381,7 @@ void closeFilling(){
 
 //关闭排水阀 不一定需要开进水泵 但是打开排水泵 一定要关闭进水泵
 void openDraining(){
-                Print("Draining Open \n",strlen("Draining Open \n"));
+               // Print("Draining Open \n",strlen("Draining Open \n"));
                 
 		filling = false ;
 		controlDeviceStatus(node,powerOff);
@@ -370,14 +396,19 @@ void openDraining(){
 		
 }
 void closeDraining(){
-                Print("Draining Close \n",strlen("Draining Close \n"));
+        //        Print("Draining Close \n",strlen("Draining Close \n"));
+  for(int i = 0 ; i < 10 ; i++){
+  HAL_Delay(500);
+  FeedDog();
+  
+  }
                 controlDeviceStatus(drainingPumpRoad,powerOff);
 		draining = false ;
 }
 
 //控制进水泵开 就意味着 排水阀必须关
 void openFilling(){
-                  Print("Filling Open \n",strlen("Filling Open \n"));
+                //  Print("Filling Open \n",strlen("Filling Open \n"));
 		filling=true;
 		controlDeviceStatus(node,powerOn);
 		HAL_Delay(500);
@@ -392,14 +423,3 @@ void openFilling(){
 #endif
 }
 
-void levelToHigh(){
-  
-	level = HIGH;
-        Print("HIGH",4);
-        
-}
-void levelToLow(){
-  
-        level = LOW;
-        Print("LOW",3);
-}

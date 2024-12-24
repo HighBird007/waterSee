@@ -26,7 +26,7 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
          FeedDog();
          if(HAL_UART_Receive(&RS485,DAMT0FFF_MT_CMD,8,500)==HAL_OK){
         
-                    Print("start relay\n",strlen("start relay\n"));
+                 //   Print("start relay\n",strlen("start relay\n"));
          return ;
          }
          else if(i==9){

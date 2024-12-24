@@ -32,7 +32,7 @@ void initSensor(void){
 	
 }
 void ZWRead(){
-	
+	Print("measure zw\n",strlen("measure zw\n"));
 	getSensorData(&ZW,0x50,6);
         
         getSensorData(&ZW,0x62,10);
@@ -40,6 +40,7 @@ void ZWRead(){
 }
 void ZDRead(){
 	
+  Print("zd smeasure\n",strlen("zd measure\n"));
 	getSensorData(&ZD,0x36,2);
 	
 	getSensorData(&ZD,0x56,2);
