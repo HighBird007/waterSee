@@ -68,6 +68,7 @@ void sensorToLora(sensorStruct * s,uint8_t length){
         
 }
 
+#define errorNum 3
 void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	
 	read[0] = s->addr;
@@ -85,7 +86,7 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	FeedDog();
         
 
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 3; i++){
         
         
         FeedDog();
@@ -102,7 +103,7 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
                 
 	} else {
         
-         if(i==9){
+         if(i==2){
            
            memset(s->sensorData, 0xFF, sizeof(s->sensorData));  // 将sensorData全设为0xFF
            
@@ -114,7 +115,7 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
            
            
          }
-        Print("defeat",5);
+        Print("defeat",6);
         HAL_Delay(500);
         FeedDog();
         }       

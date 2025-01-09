@@ -5,9 +5,9 @@
 //#define debugMode 1
 
 //如果关闭debug  一定要注意下面的三个参数
-uint8_t measureNum = 1 ; //测量轮数 一个池子测量多少次最初时3次  //系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是 30s * 需要测量的数据次数
-uint8_t flushNum = 1 ;//需要完成的冲洗次数 目前3
-uint8_t nodeNum = 8;//目前系统多少个池子
+uint8_t measureNum = 6 ; //测量轮数 一个池子测量多少次最初时3次  //系统主频80mhz 当分频器时60000  计数器时 40000 则是30s触发一次 所以发送lora数据的频率就是   30s * 需要测量的数据次数
+uint8_t flushNum = 3 ;//需要完成的冲洗次数 目前3
+uint8_t nodeNum = 11;//目前系统多少个池子
 //上面三组变量可以自己设置改变 目前100s发送一次检测数据
 
 uint8_t task=1  ;//当前任务状态，冲洗flush：1, 测量measure:2
@@ -213,6 +213,7 @@ void measureTask(){
 
 void loop(void){
    FeedDog();
+   
 #ifndef ITLevel
         
       GPIO_PinState low = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
@@ -262,6 +263,7 @@ void loop(void){
       } 
 #endif
 
+      
 	 FeedDog();
 	if(task == 1 ){
 	flushTask();
