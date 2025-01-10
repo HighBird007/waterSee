@@ -1,5 +1,5 @@
 #include "sensor.h"
-
+#include "usart.h"
 sensorStruct ZW;
 
 sensorStruct ZD;
@@ -32,7 +32,7 @@ void initSensor(void){
 	
 }
 void ZWRead(){
-	Print("measure zw\n",strlen("measure zw\n"));
+
 	getSensorData(&ZW,0x50,6);
         
         getSensorData(&ZW,0x62,10);
@@ -40,7 +40,6 @@ void ZWRead(){
 }
 void ZDRead(){
 	
-  Print("zd smeasure\n",strlen("zd measure\n"));
 	getSensorData(&ZD,0x36,2);
 	
 	getSensorData(&ZD,0x56,2);
@@ -85,7 +84,8 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
         
 	FeedDog();
         
-
+        HAL_UART_Abort_IT(&huart1);
+        
         for(int i = 0; i < errorNum; i++){
         
         
@@ -104,6 +104,8 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
                 
     		sensorToLora(s,length);
                 
+                HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
+                
                 return ;
                 
                 } else {
@@ -121,7 +123,8 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
            
            sensorToLora(s,length);
            
-                      
+           HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);      
+           
            return ;
            
            

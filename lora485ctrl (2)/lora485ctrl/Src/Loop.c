@@ -1,5 +1,6 @@
 #include "Loop.h"
 #include "head.h"
+#include "usart.h"
 //继电器地址0x02   多功能水质检测仪ZW 0x01   污浊传感器ZD0x03 排水泵继电器地址 0x11
 
 //如果注释下面的debugmode宏定义 则不会自动改变水位
@@ -13,6 +14,8 @@ uint8_t measureNum = 6 ; //测量轮数 一个池子测量多少次最初时3次
 uint8_t flushNum = 3 ;//需要完成的冲洗次数 目前3
 uint8_t nodeNum = 11;//目前系统多少个池子
 uint8_t flushTimeOut = 5 ; //参数设置超时时间 超时时间 = flushTimeOut * 30s 预防某一个池子水泵 或者 继电器没电了 导致程序无法工作下去
+
+uint8_t screenRequestLength = 8 ;
 //上面三组变量可以自己设置改变 目前100s发送一次检测数据
 
 uint8_t task=1  ;//当前任务状态，冲洗flush：1, 测量measure:2
@@ -122,6 +125,8 @@ void initLoop(void){
         openDraining();
         
         HAL_TIM_Base_Start_IT(&htim6);
+        
+        HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
         
 }
 
@@ -317,8 +322,6 @@ void assembleLoraData(){
     // 发送数据包
     LoraTxPkt(loraData, loraData[1]);
     
-    
-    
 }
 
 
@@ -381,23 +384,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           }
         
         }
-}
-
-
-
-
-void TIM1_BRK_TIM15_IRQHandler(void)
-{
-  
-   HAL_TIM_IRQHandler(&htim15);
-   
-}
-
-void TIM6_DAC_IRQHandler(void)
-{
-
-  HAL_TIM_IRQHandler(&htim6);
-
 }
 
 //关闭进水泵  但是不一定要打开排水泵

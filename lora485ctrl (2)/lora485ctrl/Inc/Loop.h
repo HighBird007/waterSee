@@ -29,6 +29,8 @@ extern uint8_t measureCount;
 
 extern uint8_t level ;
 
+extern uint8_t screenRequestLength;
+
 void initWaterLevelGPIO(void);
 
 void initRS485UART(void);

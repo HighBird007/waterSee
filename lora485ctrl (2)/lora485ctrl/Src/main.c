@@ -237,10 +237,10 @@ uint8_t ChipIDCheck(void)
 	return false;
 }
 
-
+#include "usart.h"
 int main(void)
 {
-	sys_misc_para.ms_counter            = 0;
+	sys_misc_para.ms_counter = 0;
 	HAL_Init();
 	
 	SystemClock_Config();
@@ -254,13 +254,14 @@ int main(void)
 	Print("\r\nsystem start,...\r\n",strlen("\r\nsystem start...\r\n"));
 	Print((uint8_t*)soft_ver,strlen(soft_ver));
 
-        Usart1Init();
+        MX_USART1_UART_Init();
 
 	SysMiscParaInit();
 	
 	FeedDog();
         
-
+        HAL_UART_Receive_IT(&huart1,dataArr,8);
+        
 	while(1)
 	{       
                  

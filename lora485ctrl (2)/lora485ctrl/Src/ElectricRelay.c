@@ -1,5 +1,5 @@
 #include "ElectricRelay.h"
-
+#include "usart.h"
 extern UART_HandleTypeDef RS485;
 
 uint8_t DAMT0FFF_MT_CMD[8] = {relayAdr,0x05,0x00};
@@ -22,6 +22,8 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
 	
         FeedDog();
         
+        HAL_UART_Abort_IT(&huart1);
+        
         for(int i = 0 ;i < 10 ;i++){
         
          HAL_UART_Transmit(&RS485,DAMT0FFF_MT_CMD,8,500);
@@ -34,7 +36,9 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
                 if ((DAMT0FFF_MT_RECMD[6] == DAMT0FFF_MT_CMD[6])&&((DAMT0FFF_MT_RECMD[7] == DAMT0FFF_MT_CMD[7]))) {
                 
                  // Print("relay success",strlen("relay success"));
-                  
+                
+                HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
+                
                 return ;
                 
                 } else {
@@ -48,10 +52,13 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
            
            handingError(relayError);
            
+           HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
+           
            return ;
          
          }
         
         }
+        
 }
 
