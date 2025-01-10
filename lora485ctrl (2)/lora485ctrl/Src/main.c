@@ -260,13 +260,15 @@ int main(void)
 	
 	FeedDog();
         
-         initLoop();
+
 	while(1)
-	{     
+	{       
+                 
 		LoraTask();
 		LocalTask();
                 SensorTask();
 		LedTask();
+
 		FeedDog();
 	}
 }

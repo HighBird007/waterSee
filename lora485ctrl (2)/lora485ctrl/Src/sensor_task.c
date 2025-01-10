@@ -489,7 +489,7 @@ void RxRegSuccRsp(uint8_t data[],uint16_t len)
     Print("register succeed.\r\n",strlen("register succeed.\r\n"));
 }
 
-
+uint8_t initFlag = 0;
 void SensorTask(void)
 {  
 	uint8_t decount=0;
@@ -508,9 +508,14 @@ void SensorTask(void)
 		}
 		return;
 	}
-    
-               loop();
+        if(initFlag == 0){
         
+                 initLoop();
+                 initFlag = 1;
+        }
+        
+               loop();
+        //Print("over",4);
 	if(sys_misc_para.ms_counter < pre_ms_counter + datacyc*1000) {  
 		return; 
 	}  

@@ -4,6 +4,8 @@ extern UART_HandleTypeDef RS485;
 
 uint8_t DAMT0FFF_MT_CMD[8] = {relayAdr,0x05,0x00};
 
+uint8_t DAMT0FFF_MT_RECMD[8];
+
 void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
 	
         DAMT0FFF_MT_CMD[3] = road;
@@ -23,15 +25,29 @@ void controlDeviceStatus( uint8_t road , uint8_t openOrclose){
         for(int i = 0 ;i < 10 ;i++){
         
          HAL_UART_Transmit(&RS485,DAMT0FFF_MT_CMD,8,500);
+         
          FeedDog();
-         if(HAL_UART_Receive(&RS485,DAMT0FFF_MT_CMD,8,500)==HAL_OK){
+         
+         if(HAL_UART_Receive(&RS485,DAMT0FFF_MT_RECMD,8,500)==HAL_OK){
         
-                 //   Print("start relay\n",strlen("start relay\n"));
-         return ;
+                         // 验证 CRC 校验码是否匹配
+                if ((DAMT0FFF_MT_RECMD[6] == DAMT0FFF_MT_CMD[6])&&((DAMT0FFF_MT_RECMD[7] == DAMT0FFF_MT_CMD[7]))) {
+                
+                 // Print("relay success",strlen("relay success"));
+                  
+                return ;
+                
+                } else {
+                 // Print("relay crc err",strlen("relay crc err"));
+                continue;
+                
+                }
          }
-         else if(i==9){
+         else if(i>=9){
+        
            
-           Print("error relay\n",strlen("error relay\n"));
+           handingError(relayError);
+           
            return ;
          
          }

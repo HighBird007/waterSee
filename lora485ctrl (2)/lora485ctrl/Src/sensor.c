@@ -68,7 +68,7 @@ void sensorToLora(sensorStruct * s,uint8_t length){
         
 }
 
-#define errorNum 3
+#define errorNum 5
 void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	
 	read[0] = s->addr;
@@ -86,7 +86,7 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	FeedDog();
         
 
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < errorNum; i++){
         
         
         FeedDog();
@@ -97,26 +97,36 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
           
           	FeedDog();
                 
-		sensorToLora(s,length);
+                uint16_t crcCheck = getModbusCRC16(s->sensorData,length*2+3);
 
+                // 验证 CRC 校验码是否匹配
+                if ((crcCheck&0xFF == s->sensorData[length*2+3])&&((crcCheck>>8)&0xFF == s->sensorData[length*2+4])) {
+                
+    		sensorToLora(s,length);
+                
                 return ;
+                
+                } else {
+                  
+                continue;
+                
+                }
+                
                 
 	} else {
         
-         if(i==2){
+         if(i>= errorNum -1 ){
            
            memset(s->sensorData, 0xFF, sizeof(s->sensorData));  // 将sensorData全设为0xFF
            
            sensorToLora(s,length);
            
-           Print("sensor error\n",strlen("sensor error\n"));
                       
            return ;
            
            
          }
-        Print("defeat",6);
-        HAL_Delay(500);
+        HAL_Delay(100);
         FeedDog();
         }       
        

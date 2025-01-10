@@ -10,6 +10,9 @@
 
 #include "sensor.h"
 
+#include "stdio.h"
+
+#include "string.h"
 
 #define true 1
 #define false 0
@@ -18,6 +21,7 @@
 
 #define RS485 huart1
 
+typedef enum {normal , loraError , relayError , pumpError }errorType;
 
 extern uint8_t node;
 
@@ -42,6 +46,8 @@ void closeDraining(void);
 void openDraining(void);
 
 void assembleLoraData();
+
+void handingError(errorType);
 
 #endif
 
