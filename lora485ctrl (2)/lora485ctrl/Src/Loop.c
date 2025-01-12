@@ -294,7 +294,7 @@ void initLoop(void){
         HAL_TIM_Base_Start_IT(&htim6);
         
         HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
-        
+        HAL_UARTEx_ReceiveToIdle_IT()
         //下面的是生成模拟量测试  现场注释
         
         for(int i = 0 ; i<12;i++){
