@@ -86,54 +86,13 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
         
 	FeedDog();
         
-        HAL_UART_Abort_IT(&huart1);
+        if(RS485SendCmd(&RS485,read,8) == false){
         
-        for(int i = 0; i < errorNum; i++){
-        
-        
-        FeedDog();
-        
-        HAL_UART_Transmit(&RS485,read,8,1000);
-       
-	if(HAL_UART_Receive(&RS485,s->sensorData,length*2+3+2 ,1000) == HAL_OK){
-          
-          	FeedDog();
-                
-                uint16_t crcCheck = getModbusCRC16(s->sensorData,length*2+3);
-
-                // 验证 CRC 校验码是否匹配
-                if ((crcCheck&0xFF == s->sensorData[length*2+3])&&((crcCheck>>8)&0xFF == s->sensorData[length*2+4])) {
-                
-    		sensorToLora(s,length);
-                
-                HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
-                
-                return ;
-                
-                } else {
-                  
-                continue;
-                
-                }
-                
-                
-	} else {
-        
-         if(i>= errorNum -1 ){
-           
+         
            memset(s->sensorData, 0xFF, sizeof(s->sensorData));  // 将sensorData全设为0xFF
            
            sensorToLora(s,length);
-           
-           HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);      
-           
-           return ;
-           
-         }
-        HAL_Delay(100);
-        FeedDog();
-        }       
-       
+        
         }
              
 }

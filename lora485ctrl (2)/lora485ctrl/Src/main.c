@@ -6,11 +6,9 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  /*
-  while (1)
-  {
-  }
-*/
+  
+
+
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -253,13 +251,14 @@ int main(void)
         
 	Print("\r\nsystem start,...\r\n",strlen("\r\nsystem start...\r\n"));
 	Print((uint8_t*)soft_ver,strlen(soft_ver));
-
+        MX_DMA_Init();
         MX_USART1_UART_Init();
 
 	SysMiscParaInit();
 	
 	FeedDog();
         
+        HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
 	while(1)
 	{       
                  

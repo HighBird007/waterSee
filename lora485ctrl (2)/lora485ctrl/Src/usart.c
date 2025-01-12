@@ -8,7 +8,6 @@ uint8_t dataArr[100];
 
 UART_HandleTypeDef huart1;
 
-uint8_t dataRecFlag = false ;
 
 /* USART1 init function */
 
@@ -97,7 +96,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
     hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
     hdma_usart1_rx.Init.Mode = DMA_NORMAL;
-    hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_usart1_rx.Init.Priority = DMA_PRIORITY_VERY_HIGH;
     if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK)
     {
       Error_Handler();
@@ -146,71 +145,97 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 #include "stdlib.h"   // 包含rand函数
 #include "string.h"   // 用于 memcpy 函数
 
+volatile uint8_t RS485Flag = false ;
 
+uint8_t RS485SendCmd(UART_HandleTypeDef *huart,uint8_t* cmd,uint8_t length){
+      
+   
+   //HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
+   
+   RS485Flag = false;
+          
+   for(int i = 0 ;i < 5 ; i++){
+  
+   FeedDog();
+   
+   HAL_UART_Transmit(huart,cmd,length,1000);
+   
+   FeedDog();
+   
+   HAL_Delay(500);
+   
+   FeedDog();
+   
+   if( RS485Flag == true ){
+    
+    return true;
+   
+   }
+   
+   }
+   Print("relay false\n",strlen("relay false\n"));
+   return false;
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if(huart == &huart1) {
-        
-        
-        int curID = dataArr[0] - 10;
-        
-        uint8_t t[50];
-        sprintf(t, "cur ID %d \n", curID);
-        Print(t, strlen(t));
-        uint8_t ttt[50] = {dataArr[0], 0x03, 0x04};
-        /*
-        // 生成随机浮动数（范围从1.0到10.0）
-        float randvalue = 1.0f + (rand() % 1000) / 10.0f;  // 示例：随机浮动数在 [1.0, 10.0) 范围内
-        
-        // 将浮动数转换为字节数组
-        uint8_t *tempArr = (uint8_t*)&randvalue; // uint8_t指针，指向randvalue的内存地址
-        
-        uint8_t ttt[50] = {dataArr[0], 0x03, 0x04};
-        
-        // 将浮动数的字节放入 ttt 数组中
-        ttt[6] = tempArr[0];  // 浮动数高字节
-        ttt[5] = tempArr[1];
-        ttt[4] = tempArr[2];
-        ttt[3] = tempArr[3];  // 浮动数低字节
-        */
-        float dataNum ;
-        switch(dataArr[3]){
-        
-        case 0: dataNum = pondSet[curID-1].tp;break;
-        case 2: dataNum = pondSet[curID-1].o2;break;
-        case 4: dataNum = pondSet[curID-1].ph;break;
-        case 6: dataNum = pondSet[curID-1].zd;break;
-        default: break;
-        
-        }
-        uint8_t* tempArr = (uint8_t*)&dataNum;
-        ttt[6] = tempArr[0];
-        ttt[5] = tempArr[1];
-        ttt[4] = tempArr[2];
-        ttt[3] = tempArr[3];
-        // 计算Modbus CRC16校验
-        unsigned short crc = getModbusCRC16(ttt, 7);
-        
-        // 将 CRC 校验结果加入到 ttt[7] 和 ttt[8]
-        ttt[7] = crc & 0xFF;        // CRC低字节
-        ttt[8] = (crc >> 8) & 0xFF; // CRC高字节
-        
-        // 发送数据
-        HAL_UART_Transmit(&huart1, ttt, 9, 1000);
-        
-        // 重新开始接收数据
-        HAL_UART_Receive_IT(&huart1, dataArr, screenRequestLength);
-    }
+}
+//arr存放数据的数组  length为数组总长度 crc默认在最后两位 low high
+uint8_t checkCRC(uint8_t* arr, uint8_t length) {
+    // 获取 Modbus CRC16 校验值
+    uint16_t crc = getModbusCRC16(arr, length - 2);
+
+    // 通过与运算提取低字节和高字节进行校验
+    return ((crc & 0xFF) == arr[length - 2]) && (((crc >> 8) & 0xFF) == arr[length - 1]);
 }
 
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-  UNUSED(Size);
+  if(huart == &RS485){
 
+        Print("usart OVER\n",strlen("usart OVER\n"));
+    if(checkCRC(dataArr,Size) == false ){
+      
+    Print("crc error",strlen("crc error"));
+       
+    HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
+        
+    return ;
+    
+    }
+    
+    uint8_t add = dataArr[0];
+    
+    switch(add){
+    
+    case relayAdr:
+      
+    Print("relay OVER",strlen("relay OVER"));
+    
+    RS485Flag = true;
+    
+    break;
+    
+    case ZWADDR:
+    
+    RS485Flag = true;
+    
+    break;
+    
+    case ZDADDR:
+    
+    RS485Flag = true;
+    
+    break;
+    
+    default:
+    Print("screen OVER",strlen("screen OVER"));
+    sendDataToScreen();
+    
+    break;
+
+    }
+    
+    HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
+  }
 
 }
 /* USER CODE END 1 */

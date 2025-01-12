@@ -41,6 +41,8 @@ extern UART_HandleTypeDef huart1;
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+uint8_t RS485SendCmd(UART_HandleTypeDef *huart,uint8_t* cmd,uint8_t length);
+
 extern uint8_t dataRecFlag;
 extern uint8_t dataArr[];
 /* USER CODE END Prototypes */

@@ -11,6 +11,7 @@
 #include "string.h"
 #include "head.h"
 #include "usart.h"
+#include "stdio.h"
 
 #define true 1
 #define false 0
@@ -18,6 +19,10 @@
 #define LOW 0
 
 #define RS485 huart1
+
+#define relayAdr 0x02
+#define ZWADDR 0x01
+#define ZDADDR 0x03
 
 typedef enum {normal , loraError , relayError , pumpError }errorType;
 

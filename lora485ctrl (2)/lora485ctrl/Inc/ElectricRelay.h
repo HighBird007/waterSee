@@ -6,7 +6,6 @@
 #include "CRC16MODBUS.h"
 
 //继电器的485地址
-#define relayAdr 0x02
 
 #define drainingPumpRoad 0x0B
 

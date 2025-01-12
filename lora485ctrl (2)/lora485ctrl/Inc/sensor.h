@@ -7,9 +7,6 @@
 
 #include "string.h"
 
-#define ZWADDR 0x01
-
-#define ZDADDR 0x03
 
 typedef struct{
 	

@@ -232,12 +232,39 @@ void handingError(errorType type){
     case relayError:
     
     sprintf(errorMes,"relay error pumpId %d",node+1);
-             
+    
+        pondSet[node].tp = -1;
+        pondSet[node].o2 = -1;
+        pondSet[node].ph = -1;
+        pondSet[node].zd = -1;
+        
+                   LoraTxPkt(errorMes, strlen(errorMes));
+  
+           Print(errorMes,strlen(errorMes));
+           
+                      deviceStatus = normal;
+           
+           flushTimeOutCount = 0 ;
+           
+           task=1 ;
+           
+           flushCount=0 ; //当前系统冲洗了多少次
+           
+           measureCount=0; //当前系统已经测量了多少次
+                      node++;//当前水池异常推迟下一个试试
+           
+           node = node % nodeNum ;
+           return ;
     break;
     
     case pumpError:
     
     sprintf(errorMes,"pump error pumpId %d",node+1);
+        pondSet[node].tp = -1;
+        pondSet[node].o2 = -1;
+        pondSet[node].ph = -1;
+        pondSet[node].zd = -1;
+    
     
     break;
     
@@ -275,12 +302,15 @@ void initLoop(void){
        initWaterLevelGPIO_Input();
 #endif
        
+        
+               
         //初始化测量定时器 冲洗完成后 等待水体稳定下来后测量
         MX_TIM15_Init();
         //这个定时器是用来定时  抽水任务的 如果长时间没有将对应的变量清0 则会上报检测
         MX_TIM6_Init();
         //初始化传感器结构体
         initSensor();
+        
         
 	for(;node < nodeNum ;node++){
 	closeFilling();
@@ -293,8 +323,7 @@ void initLoop(void){
         
         HAL_TIM_Base_Start_IT(&htim6);
         
-        HAL_UART_Receive_IT(&huart1,dataArr,screenRequestLength);
-        HAL_UARTEx_ReceiveToIdle_IT()
+        
         //下面的是生成模拟量测试  现场注释
         
         for(int i = 0 ; i<12;i++){
