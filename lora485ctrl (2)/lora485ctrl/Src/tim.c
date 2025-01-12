@@ -27,7 +27,7 @@ void MX_TIM6_Init(void)
   htim6.Instance = TIM6;
   
     htim6.Init.Prescaler = 60000 ;
-    htim6.Init.Period = 4000;
+    htim6.Init.Period = 40000;
 
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
 
@@ -155,4 +155,40 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM15_MspDeInit 1 */
   }
+}
+
+
+extern uint8_t measureNum ;
+extern uint8_t flushTimeOutCount ;
+extern uint8_t flushTimeOut;
+//测量一分钟间隔
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	
+	if(htim == &htim15){
+		
+		++measureCount;
+ 
+		if(measureCount >= measureNum){
+
+                HAL_TIM_Base_Stop_IT(&htim15);
+		
+                __HAL_TIM_SET_COUNTER(&htim15,0);
+                
+		}
+	}else if(&htim6){
+        
+          //如果小于等于超时时间 那么意味着水长时间没有抽取上来 上报服务器错误
+          
+          uint8_t t[50];
+          
+          sprintf(t,"time out %d",++flushTimeOutCount);
+          Print(t,strlen(t));
+          
+          if(flushTimeOutCount >=  flushTimeOut ){
+           
+          deviceStatus = pumpError;
+          
+          }
+        
+        }
 }

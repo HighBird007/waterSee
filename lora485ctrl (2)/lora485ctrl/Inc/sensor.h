@@ -41,5 +41,8 @@ void ZWRead(void);
 
 void ZDRead(void);
 
+//将传感器的数据放入对应的池子结构体  此函数应该在传感器数据放入toLora数组中后使用
+void updatePondStructData(void);
+
 #endif
 

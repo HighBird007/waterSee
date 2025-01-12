@@ -260,8 +260,6 @@ int main(void)
 	
 	FeedDog();
         
-        HAL_UART_Receive_IT(&huart1,dataArr,8);
-        
 	while(1)
 	{       
                  

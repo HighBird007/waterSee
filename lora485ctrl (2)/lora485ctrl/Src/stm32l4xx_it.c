@@ -2,6 +2,7 @@
 #include "stm32l4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Loop.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -235,4 +236,11 @@ void TIM6_DAC_IRQHandler(void)
   /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
 
   /* USER CODE END TIM6_DAC_IRQn 1 */
+}
+void EXTI15_10_IRQHandler(void)
+{
+
+  HAL_GPIO_EXTI_IRQHandler(LowFlag_Pin);
+  HAL_GPIO_EXTI_IRQHandler(HighFlag_Pin);
+
 }

@@ -68,6 +68,8 @@ void sensorToLora(sensorStruct * s,uint8_t length){
 }
 
 #define errorNum 5
+
+//LENGTH翻译不好  其实是寄存器的个数
 void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
 	
 	read[0] = s->addr;
@@ -127,7 +129,6 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
            
            return ;
            
-           
          }
         HAL_Delay(100);
         FeedDog();
@@ -135,4 +136,17 @@ void getSensorData(sensorStruct * s , uint8_t startReg , uint8_t length){
        
         }
              
+}
+
+void updatePondStructData(){
+    
+    //传感器传输过来的 以及 单片机都是小端对齐 
+    memcpy(&pondSet[node].tp,ZW.toLora,4);
+    
+    memcpy(&pondSet[node].o2,ZW.toLora+8,4);
+    
+    memcpy(&pondSet[node].ph,ZW.toLora+24,4);
+    
+    memcpy(&pondSet[node].zd,ZD.toLora,4);
+  
 }
