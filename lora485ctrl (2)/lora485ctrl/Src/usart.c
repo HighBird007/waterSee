@@ -174,9 +174,11 @@ uint8_t RS485SendCmd(UART_HandleTypeDef *huart,uint8_t* cmd,uint8_t length){
    
    }
    Print("relay false\n",strlen("relay false\n"));
+   
    return false;
 
 }
+
 //arr存放数据的数组  length为数组总长度 crc默认在最后两位 low high
 uint8_t checkCRC(uint8_t* arr, uint8_t length) {
     // 获取 Modbus CRC16 校验值
@@ -191,7 +193,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if(huart == &RS485){
 
-        Print("usart OVER\n",strlen("usart OVER\n"));
+    Print("usart OVER\n",strlen("usart OVER\n"));
+    
     if(checkCRC(dataArr,Size) == false ){
       
     Print("crc error",strlen("crc error"));
@@ -202,9 +205,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     
     }
     
-    uint8_t add = dataArr[0];
+    uint8_t addr = dataArr[0];
     
-    switch(add){
+    uint8_t lala[50];
+    sprintf(lala,"cur device %d \n",addr);
+    Print(lala,strlen(lala));
+    
+    switch(addr){
     
     case relayAdr:
       
@@ -227,7 +234,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     break;
     
     default:
+      
     Print("screen OVER",strlen("screen OVER"));
+    
     sendDataToScreen();
     
     break;
