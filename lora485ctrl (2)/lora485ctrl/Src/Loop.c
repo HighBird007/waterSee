@@ -175,7 +175,7 @@ FeedDog();
           HAL_Delay(500);
           FeedDog();
           
-         Print("low is low\n",strlen("low is low\n"));
+       //  Print("low is low\n",strlen("low is low\n"));
          GPIO_PinState test = HAL_GPIO_ReadPin(LowFlag_GPIO_Port,LowFlag_Pin);
           
           if(test != GPIO_PIN_RESET){
@@ -185,7 +185,7 @@ FeedDog();
           }
           
         }
-       Print("sure low is low\n",strlen("sure low is low\n"));
+      // Print("sure low is low\n",strlen("sure low is low\n"));
       level = LOW;
       
       }
@@ -199,13 +199,13 @@ FeedDog();
           GPIO_PinState test = HAL_GPIO_ReadPin(HighFlag_GPIO_Port,HighFlag_Pin);
           if(test != GPIO_PIN_SET){
           
-          Print("high is error\n",strlen("high is error\n"));
+         // Print("high is error\n",strlen("high is error\n"));
           return ;
           
           }
           
         }
-       Print("sure high is high\n",strlen("sure high is high\n"));
+     //  Print("sure high is high\n",strlen("sure high is high\n"));
       level = HIGH;
       
       } 
@@ -238,7 +238,7 @@ void handingError(errorType type){
         pondSet[node].ph = -1;
         pondSet[node].zd = -1;
         
-                   LoraTxPkt(errorMes, strlen(errorMes));
+                  // LoraTxPkt(errorMes, strlen(errorMes));
   
            Print(errorMes,strlen(errorMes));
            
@@ -260,6 +260,7 @@ void handingError(errorType type){
     case pumpError:
     
     sprintf(errorMes,"pump error pumpId %d",node+1);
+    
         pondSet[node].tp = -1;
         pondSet[node].o2 = -1;
         pondSet[node].ph = -1;

@@ -14,6 +14,8 @@
 #define powerOff 0x00
 
 void controlDeviceStatus(uint8_t road , uint8_t openOrclose);
-	
+
+void controlDeviceAllOFF(void);
+
 #endif
 

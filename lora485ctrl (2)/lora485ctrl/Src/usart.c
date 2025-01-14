@@ -5,19 +5,12 @@
 //所有收数据 首先需要放到这个数组中
 uint8_t dataArr[100];
 
-
-UART_HandleTypeDef huart1;
-
-
-/* USART1 init function */
-
-#include "usart.h"
-
 /* USER CODE BEGIN 0 */
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USART1 init function */
 
@@ -46,7 +39,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+__HAL_UART_ENABLE_IT(&huart1, UART_IT_ERR);
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -104,6 +97,23 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart1_rx);
 
+    /* USART1_TX Init */
+    hdma_usart1_tx.Instance = DMA1_Channel4;
+    hdma_usart1_tx.Init.Request = DMA_REQUEST_2;
+    hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart1_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart1_tx.Init.Mode = DMA_NORMAL;
+    hdma_usart1_tx.Init.Priority = DMA_PRIORITY_HIGH;
+    if (HAL_DMA_Init(&hdma_usart1_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmatx,hdma_usart1_tx);
+
     /* USART1 interrupt Init */
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
@@ -132,6 +142,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* USART1 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmarx);
+    HAL_DMA_DeInit(uartHandle->hdmatx);
 
     /* USART1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(USART1_IRQn);
@@ -173,7 +184,6 @@ uint8_t RS485SendCmd(UART_HandleTypeDef *huart,uint8_t* cmd,uint8_t length){
    }
    
    }
-   Print("relay false\n",strlen("relay false\n"));
    
    return false;
 
@@ -193,8 +203,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if(huart == &RS485){
 
-    Print("usart OVER\n",strlen("usart OVER\n"));
-    
+     
     if(checkCRC(dataArr,Size) == false ){
       
     Print("crc error",strlen("crc error"));
@@ -207,15 +216,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     
     uint8_t addr = dataArr[0];
     
-    uint8_t lala[50];
-    sprintf(lala,"cur device %d \n",addr);
-    Print(lala,strlen(lala));
     
     switch(addr){
     
     case relayAdr:
       
-    Print("relay OVER",strlen("relay OVER"));
     
     RS485Flag = true;
     
@@ -235,7 +240,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     
     default:
       
-    Print("screen OVER",strlen("screen OVER"));
     
     sendDataToScreen();
     
@@ -245,6 +249,23 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     
     HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
   }
+
+}
+
+extern uint8_t draining ; //当前的排水泵是否开启
+extern uint8_t filling  ;//当前的进水泵是否开启
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+
+      uint8_t dummy;
+    // 读取接收数据寄存器（清除溢出错误）
+      controlDeviceAllOFF();
+      draining = false ; //当前的排水泵是否开启
+      filling = false ;//当前的进水泵是否开启
+      Print("uart ore \n", strlen("uart ore \n"));
+      __HAL_UART_CLEAR_OREFLAG(&huart1);
+      HAL_UART_Receive_IT(&huart1,&dummy,1);
+      HAL_UARTEx_ReceiveToIdle_DMA(&RS485,dataArr,100);
 
 }
 /* USER CODE END 1 */
